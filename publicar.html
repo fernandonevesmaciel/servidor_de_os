@@ -27,7 +27,6 @@
         .btn-cancel { background-color: #94a3b8; margin-top: 10px; }
         .btn-secondary { background-color: white; color: var(--primary); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; margin: 0 auto; display: block; }
         
-        /* Estilos do Filtro */
         .filter-bar { display: flex; gap: 10px; margin-top: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; background: white; padding: 15px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--card-shadow); }
         .filter-bar .custom-input { flex: 1; min-width: 200px; margin-bottom: 0; }
         .filter-bar .btn-filter { width: auto; padding: 10px 20px; margin: 0; }
@@ -61,11 +60,15 @@
             <div class="form-grid">
                 <div>
                     <label>Código da O.S.</label>
-                    <input type="text" id="codigoOS" class="custom-input" placeholder="Ex: OS-001">
+                    <input type="text" id="codigoOS" class="custom-input" placeholder="Ex: 001" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                 </div>
                 <div>
                     <label>Solicitante</label>
                     <input type="text" id="solicitante" class="custom-input" placeholder="Nome do solicitante">
+                </div>
+                <div>
+                    <label>Setor <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="setor" class="custom-input" placeholder="Ex: Sala de Cortes, Expedição...">
                 </div>
                 <div>
                     <label>Data Estipulada</label>
@@ -100,7 +103,7 @@
         </div>
 
         <div class="filter-bar">
-            <input type="text" id="buscaCodigo" class="custom-input" placeholder="Pesquisar por Código...">
+            <input type="text" id="buscaCodigo" class="custom-input" placeholder="Pesquisar por Código..." inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             <select id="buscaTipo" class="custom-input">
                 <option value="">Todos os Tipos</option>
                 <option value="Elétrica">Elétrica</option>
@@ -120,12 +123,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        // Importando o "where" para habilitar os filtros de busca
         import { getFirestore, collection, getDocs, query, orderBy, limit, startAfter, doc, deleteDoc, updateDoc, setDoc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ==========================================
-        // 1. CONFIGURAÇÕES DOS BANCOS DE DADOS
-        // ==========================================
         const configMecanica = {
             apiKey: "AIzaSyAwBdNKVmujXM-icPXZllCYw4ED6ugSEK0",
             authDomain: "mecanica-699bb.firebaseapp.com",
@@ -150,14 +149,14 @@
         const dbMecanica = getFirestore(appMecanica);
         const dbEletrica = getFirestore(appEletrica);
 
-        // ==========================================
-        // 2. VARIÁVEIS GLOBAIS E UTILITÁRIOS
-        // ==========================================
         let ultimoDocCarregado = null;
         const ITENS_POR_PAGINA = 6;
         let carregando = false;
         let idEdicao = null; 
         let fotoUrlAtual = ""; 
+
+        // Cache para armazenar os dados e evitar quebra no HTML
+        window.osDataCache = {};
 
         const converterParaBase64 = (file) => {
             return new Promise((resolve, reject) => {
@@ -168,9 +167,6 @@
             });
         };
 
-        // ==========================================
-        // 3. LÓGICA DE FILTROS (PESQUISA)
-        // ==========================================
         window.aplicarFiltros = function() {
             document.getElementById('lista').innerHTML = '';
             document.getElementById('msgFim').style.display = 'none';
@@ -185,12 +181,10 @@
             resetarLista();
         }
 
-        // ==========================================
-        // 4. LÓGICA PRINCIPAL (CRIAR/EDITAR NOS 2 BANCOS)
-        // ==========================================
         window.salvarOS = async function() {
             const codigoOS = document.getElementById('codigoOS').value;
             const solicitante = document.getElementById('solicitante').value;
+            const setor = document.getElementById('setor').value;
             const dataEstipulada = document.getElementById('dataEstipulada').value;
             const tipoServico = document.getElementById('tipoServico').value;
             const descricao = document.getElementById('descricao').value;
@@ -200,7 +194,10 @@
             const btn = document.getElementById('btnSalvar');
             const status = document.getElementById('status');
 
-            if (!codigoOS || !solicitante || !descricao) { alert("Preencha Código, Solicitante e Descrição!"); return; }
+            if (!codigoOS || !solicitante || !setor || !descricao) { 
+                alert("Preencha Código, Solicitante, Setor e Descrição!"); 
+                return; 
+            }
             if (!idEdicao && !file) { alert("Anexe uma foto do local!"); return; }
             if (file && file.size > 700 * 1024) { alert("Foto muito grande! Use < 700KB."); return; }
 
@@ -216,6 +213,7 @@
                     codigoOS: codigoOS,
                     codigoBusca: codigoOS.toLowerCase(),
                     solicitante: solicitante,
+                    setor: setor,
                     dataEstipulada: dataEstipulada,
                     tipoServico: tipoServico,
                     descricao: descricao,
@@ -243,7 +241,6 @@
                     cancelarEdicao(); 
                 }
                 
-                // Limpa os filtros ao salvar e mostra a lista atualizada
                 limparFiltros();
             } catch (error) {
                 console.error("Erro:", error); status.innerText = "Erro ao salvar.";
@@ -254,18 +251,29 @@
             }
         }
 
-        // ==========================================
-        // 5. EDIÇÃO E EXCLUSÃO
-        // ==========================================
-        window.editarItem = function(id, dataString) {
-            const data = JSON.parse(dataString);
+        window.editarItem = function(id) {
+            // Busca os dados diretamente da memória usando o ID
+            const data = window.osDataCache[id];
+            
+            if (!data) {
+                alert("Erro ao carregar dados para edição.");
+                return;
+            }
+
+            // TRAVA DE SEGURANÇA: Bloqueia a edição se a O.S já estiver concluída
+            if (data.status === 'Concluída') {
+                alert("Não é possível editar uma Ordem de Serviço que já foi concluída.");
+                return;
+            }
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
             
-            document.getElementById('codigoOS').value = data.codigoOS;
-            document.getElementById('solicitante').value = data.solicitante;
-            document.getElementById('dataEstipulada').value = data.dataEstipulada;
-            document.getElementById('tipoServico').value = data.tipoServico;
-            document.getElementById('descricao').value = data.descricao;
+            document.getElementById('codigoOS').value = data.codigoOS || '';
+            document.getElementById('solicitante').value = data.solicitante || '';
+            document.getElementById('setor').value = data.setor || '';
+            document.getElementById('dataEstipulada').value = data.dataEstipulada || '';
+            document.getElementById('tipoServico').value = data.tipoServico || 'Elétrica';
+            document.getElementById('descricao').value = data.descricao || '';
             
             idEdicao = id; 
             fotoUrlAtual = data.fotoUrl;
@@ -288,13 +296,13 @@
         }
 
         window.excluirItem = async function(id, codigoOS) {
-            if (confirm(`Tem certeza que deseja excluir a ${codigoOS} de AMBOS os bancos?`)) {
+            if (confirm(`Tem certeza que deseja excluir a O.S. ${codigoOS} de AMBOS os bancos?`)) {
                 try {
                     await deleteDoc(doc(dbMecanica, "ordens_servico", id));
                     await deleteDoc(doc(dbEletrica, "ordens_servico", id));
                     
                     alert("O.S. excluída dos dois sistemas!"); 
-                    aplicarFiltros(); // Recarrega a lista respeitando filtros atuais
+                    aplicarFiltros(); 
                 } catch (error) { 
                     console.error(error); 
                     alert("Erro ao excluir."); 
@@ -302,9 +310,6 @@
             }
         }
 
-        // ==========================================
-        // 6. CARREGAMENTO E RENDERIZAÇÃO
-        // ==========================================
         window.carregarProximos = async function() {
             if (carregando) return;
             carregando = true;
@@ -323,25 +328,21 @@
                 const colRef = collection(dbMecanica, "ordens_servico");
                 let restricoes = [];
 
-                // Verifica se há texto no campo código (pesquisa por prefixo)
                 if (codigoFiltro) {
                     restricoes.push(where("codigoBusca", ">=", codigoFiltro));
                     restricoes.push(where("codigoBusca", "<=", codigoFiltro + '\uf8ff'));
                 } 
-                // Se não tiver código, mas tiver tipo, pesquisa por tipo
                 else if (tipoFiltro) {
                     restricoes.push(where("tipoServico", "==", tipoFiltro));
                 }
 
                 if (!temFiltroAtivo) {
-                    // Carregamento normal com paginação
                     if (!ultimoDocCarregado) {
                         q = query(colRef, orderBy("dataCriacao", "desc"), limit(ITENS_POR_PAGINA));
                     } else {
                         q = query(colRef, orderBy("dataCriacao", "desc"), startAfter(ultimoDocCarregado), limit(ITENS_POR_PAGINA));
                     }
                 } else {
-                    // Carregamento com filtros (Limitamos a 50 itens para não pesar e retiramos o orderBy para não exigir Index no Firebase)
                     q = query(colRef, ...restricoes, limit(50));
                 }
 
@@ -352,7 +353,6 @@
                     docsArray.push({ id: docSnap.id, data: docSnap.data() });
                 });
 
-                // Se houver filtros, ordenamos pela data da mais recente pra mais antiga diretamente no navegador
                 if (temFiltroAtivo) {
                     docsArray.sort((a, b) => {
                         let timeA = a.data.dataCriacao ? a.data.dataCriacao.toMillis() : 0;
@@ -372,12 +372,9 @@
                     if(msgFim) msgFim.style.display = "none";
                 }
 
-                // Renderiza os cards
                 docsArray.forEach(item => criarCard(item.id, item.data));
 
-                // Lida com o botão "Carregar Mais"
                 if (temFiltroAtivo) {
-                    // Na pesquisa, mostramos os resultados sem botão de carregar mais para simplificar
                     if(btnMais) btnMais.style.display = "none";
                 } else {
                     ultimoDocCarregado = snapshot.docs[snapshot.docs.length - 1];
@@ -400,23 +397,28 @@
             document.getElementById('msgFim').style.display = 'none';
             document.getElementById('btnCarregarMais').style.display = 'none';
             ultimoDocCarregado = null; 
+            window.osDataCache = {}; // Limpa o cache ao resetar
             carregarProximos();
         }
 
         function criarCard(id, data) {
+            // Salva os dados na memória para não quebrar o HTML com a descrição
+            window.osDataCache[id] = data;
+
             const div = document.createElement('div');
             div.className = 'item-card';
             
             const badgeClass = data.status === 'Concluída' ? 'badge-concluida' : 'badge-pendente';
-            const dataString = JSON.stringify(data).replace(/"/g, '&quot;');
             
+            // Note que agora o onclick passa apenas o ID, e não mais o dataString
             div.innerHTML = `
                 <h4>${data.codigoOS}</h4>
                 <p style="font-size: 0.8rem; margin: -5px 0 10px 0; color: var(--primary);"><strong>${data.tipoServico}</strong></p>
                 <div><span class="badge ${badgeClass}">${data.status}</span></div>
+                <p style="margin-bottom: 5px;"><strong>Setor:</strong> ${data.setor || 'Não informado'}</p>
                 <p><strong>Solicitante:</strong> ${data.solicitante}</p>
                 <div class="card-actions">
-                    <button class="action-btn btn-edit" onclick='editarItem("${id}", "${dataString}")'>Editar</button>
+                    <button class="action-btn btn-edit" onclick='editarItem("${id}")'>Editar</button>
                     <button class="action-btn btn-delete" onclick='excluirItem("${id}", "${data.codigoOS}")'>Excluir</button>
                 </div>
             `;
@@ -426,13 +428,13 @@
         function limparFormulario() {
             document.getElementById('codigoOS').value = '';
             document.getElementById('solicitante').value = '';
+            document.getElementById('setor').value = '';
             document.getElementById('dataEstipulada').value = '';
             document.getElementById('tipoServico').value = 'Elétrica';
             document.getElementById('descricao').value = '';
             document.getElementById('fotoInput').value = '';
         }
 
-        // Inicializa
         resetarLista();
     </script>
 </body>

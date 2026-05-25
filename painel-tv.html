@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de O.S. em Aberto - Manutenção Pioneiro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root { 
+            --primary: #2563eb; --bg: #0f172a; 
+            --text-main: #f8fafc; --text-secondary: #94a3b8; 
+            --card-bg: #1e293b; --border: #334155;
+            --warning: #f59e0b;
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main); 
+            margin: 0; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; 
+        }
+
+        header {
+            background: var(--card-bg);
+            padding: 15px 40px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-infos {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .paginacao {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .relogio {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--warning);
+        }
+
+        main {
+            flex: 1;
+            padding: 15px 20px;
+            position: relative;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            height: 100%; 
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .os-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: hidden; 
+        }
+
+        .os-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .os-codigo {
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .os-tipo {
+            background: var(--primary);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .os-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .info-box {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .info-label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .info-value {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--warning);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .os-descricao-container {
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .os-descricao {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            margin: 0;
+            color: var(--text-main);
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* Limitado a 3 linhas para garantir que caiba */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .progress-bar-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: var(--card-bg);
+            z-index: 20;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+        }
+
+        .vazio {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 2.5rem;
+            color: var(--text-secondary);
+            gap: 20px;
+        }
+        .vazio i { font-size: 5rem; color: var(--success); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><i class="fa-solid fa-tv"></i> Painel de O.S. Pendentes</h1>
+        <div class="header-infos">
+            <div class="paginacao" id="paginacao"></div>
+            <div class="relogio" id="relogio">00:00:00</div>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <div class="vazio">
+            <i class="fa-solid fa-spinner fa-spin" style="color: var(--primary);"></i>
+            <p>Carregando Ordens de Serviço...</p>
+        </div>
+    </main>
+
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAwBdNKVmujXM-icPXZllCYw4ED6ugSEK0",
+            authDomain: "mecanica-699bb.firebaseapp.com",
+            projectId: "mecanica-699bb",
+            messagingSenderId: "223675812288",
+            appId: "1:223675812288:web:f91f3dab6705fa7a2aa025",
+            measurementId: "G-G78PR55F9F"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const ITENS_POR_PAGINA = 8; 
+        const TEMPO_EXIBICAO_MS = 15000; 
+        
+        let ordensPendentes = [];
+        let paginaAtual = 0;
+        let intervaloTroca;
+        let intervaloProgresso;
+
+        function atualizarRelogio() {
+            const agora = new Date();
+            document.getElementById('relogio').innerText = agora.toLocaleTimeString('pt-BR');
+        }
+        setInterval(atualizarRelogio, 1000);
+        atualizarRelogio();
+
+        const q = query(collection(db, "ordens_servico"), where("status", "==", "Pendente"));
+        
+        onSnapshot(q, (snapshot) => {
+            ordensPendentes = [];
+            snapshot.forEach((doc) => {
+                ordensPendentes.push({ id: doc.id, ...doc.data() });
+            });
+
+            ordensPendentes.sort((a, b) => {
+                let timeA = a.dataCriacao ? a.dataCriacao.toMillis() : 0;
+                let timeB = b.dataCriacao ? b.dataCriacao.toMillis() : 0;
+                return timeA - timeB; 
+            });
+
+            console.log(`[Painel] Atualizado: ${ordensPendentes.length} O.S. pendentes.`);
+            
+            iniciarApresentacao();
+        });
+
+        function iniciarApresentacao() {
+            clearInterval(intervaloTroca);
+            clearInterval(intervaloProgresso);
+            paginaAtual = 0;
+            
+            exibirPaginaAtual();
+            
+            const totalPaginas = Math.ceil(ordensPendentes.length / ITENS_POR_PAGINA);
+            if (totalPaginas > 1) {
+                intervaloTroca = setInterval(exibirPaginaAtual, TEMPO_EXIBICAO_MS);
+            }
+        }
+
+        function exibirPaginaAtual() {
+            const main = document.getElementById('main-content');
+            const indPaginacao = document.getElementById('paginacao');
+            
+            if (ordensPendentes.length === 0) {
+                main.innerHTML = `
+                    <div class="vazio">
+                        <i class="fa-solid fa-check-circle" style="color: #10b981;"></i>
+                        <p>Nenhuma O.S. pendente no momento!</p>
+                    </div>
+                `;
+                indPaginacao.innerText = "";
+                animarBarraProgresso(false);
+                return;
+            }
+
+            const totalPaginas = Math.ceil(ordensPendentes.length / ITENS_POR_PAGINA);
+            const startIndex = paginaAtual * ITENS_POR_PAGINA;
+            const osDaPagina = ordensPendentes.slice(startIndex, startIndex + ITENS_POR_PAGINA);
+
+            let htmlGrid = '<div class="grid-container">';
+            
+            osDaPagina.forEach((os) => {
+                let dataFormatada = os.dataEstipulada || "S/ Data";
+                if (os.dataEstipulada) {
+                    const partes = os.dataEstipulada.split('-');
+                    if (partes.length === 3) dataFormatada = `${partes[2]}/${partes[1]}/${partes[0].substring(2)}`; 
+                }
+
+                htmlGrid += `
+                    <div class="os-card">
+                        <div class="os-header">
+                            <h2 class="os-codigo">${os.codigoOS}</h2>
+                            <span class="os-tipo"><i class="fa-solid fa-wrench"></i> ${os.tipoServico || 'Não Info'}</span>
+                        </div>
+                        
+                        <div class="os-grid">
+                            <div class="info-box" style="grid-column: span 2; border-color: var(--primary); background: rgba(37, 99, 235, 0.1);">
+                                <span class="info-label">Setor / Local</span>
+                                <p class="info-value" style="color: #fff;" title="${os.setor}">
+                                    <i class="fa-solid fa-map-pin" style="color: var(--primary); margin-right: 5px;"></i> ${os.setor || 'Não informado'}
+                                </p>
+                            </div>
+
+                            <div class="info-box">
+                                <span class="info-label">Solicitante</span>
+                                <p class="info-value" title="${os.solicitante}">${os.solicitante || 'N/A'}</p>
+                            </div>
+                            <div class="info-box">
+                                <span class="info-label">Data Limite</span>
+                                <p class="info-value"><i class="fa-regular fa-calendar"></i> ${dataFormatada}</p>
+                            </div>
+                        </div>
+
+                        <div class="os-descricao-container">
+                            <span class="info-label">Descrição da Tarefa</span>
+                            <p class="os-descricao" title="${os.descricao}">${os.descricao || 'Sem descrição.'}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            htmlGrid += '</div>';
+            main.innerHTML = htmlGrid;
+
+            if (totalPaginas > 1) {
+                indPaginacao.innerText = `Página ${paginaAtual + 1} de ${totalPaginas}`;
+            } else {
+                indPaginacao.innerText = "";
+            }
+
+            paginaAtual = (paginaAtual + 1) % totalPaginas;
+
+            animarBarraProgresso(totalPaginas > 1);
+        }
+
+        function animarBarraProgresso(ativar) {
+            const barra = document.getElementById('progressBar');
+            clearInterval(intervaloProgresso);
+            
+            if (!ativar) {
+                barra.style.width = '0%';
+                return;
+            }
+
+            let inicio = Date.now();
+            intervaloProgresso = setInterval(() => {
+                let tempoPassado = Date.now() - inicio;
+                let porcentagem = (tempoPassado / TEMPO_EXIBICAO_MS) * 100;
+                
+                if (porcentagem > 100) porcentagem = 100;
+                barra.style.width = `${porcentagem}%`;
+
+            }, 50);
+        }
+
+    </script>
+</body>
+</html>
