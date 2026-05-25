@@ -84,6 +84,13 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Animação para o efeito de piscar */
+        @keyframes piscar {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
         .os-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
@@ -96,10 +103,11 @@
             overflow: hidden; 
         }
 
-        /* Classe para OS vencida */
+        /* Estilo para O.S. vencida (Fundo vermelho e animação) */
         .os-card.vencida {
-            background: #450a0a;
-            border: 2px solid var(--danger);
+            background: #7f1d1d !important;
+            border: 2px solid var(--danger) !important;
+            animation: piscar 1.2s infinite;
         }
 
         .os-header {
@@ -270,11 +278,11 @@
                 ordensPendentes.push({ id: doc.id, ...doc.data() });
             });
 
-            // ORDENAÇÃO: Data mais próxima primeiro
+            // Ordena por data (mais antigas primeiro)
             ordensPendentes.sort((a, b) => {
-                const dataA = a.dataEstipulada ? new Date(a.dataEstipulada).getTime() : Infinity;
-                const dataB = b.dataEstipulada ? new Date(b.dataEstipulada).getTime() : Infinity;
-                return dataA - dataB;
+                const dateA = a.dataEstipulada ? new Date(a.dataEstipulada).getTime() : Infinity;
+                const dateB = b.dataEstipulada ? new Date(b.dataEstipulada).getTime() : Infinity;
+                return dateA - dateB;
             });
 
             iniciarApresentacao();
@@ -309,9 +317,9 @@
             let htmlGrid = '<div class="grid-container">';
             
             osDaPagina.forEach((os) => {
-                // Lógica de Vencimento
                 let dataObj = os.dataEstipulada ? new Date(os.dataEstipulada + 'T00:00:00') : null;
-                let classeVencida = (dataObj && dataObj < hoje) ? 'vencida' : '';
+                let isVencida = dataObj && dataObj < hoje;
+                let classeVencida = isVencida ? 'vencida' : '';
                 
                 let dataFormatada = os.dataEstipulada ? os.dataEstipulada.split('-').reverse().join('/') : "S/ Data";
 
@@ -347,6 +355,18 @@
             main.innerHTML = htmlGrid;
             indPaginacao.innerText = totalPaginas > 1 ? `Página ${paginaAtual + 1} de ${totalPaginas}` : "";
             paginaAtual = (paginaAtual + 1) % totalPaginas;
+            animarBarraProgresso(totalPaginas > 1);
+        }
+
+        function animarBarraProgresso(ativar) {
+            const barra = document.getElementById('progressBar');
+            clearInterval(intervaloProgresso);
+            if (!ativar) { barra.style.width = '0%'; return; }
+            let inicio = Date.now();
+            intervaloProgresso = setInterval(() => {
+                let progresso = ((Date.now() - inicio) / TEMPO_EXIBICAO_MS) * 100;
+                barra.style.width = Math.min(progresso, 100) + '%';
+            }, 50);
         }
     </script>
 </body>
