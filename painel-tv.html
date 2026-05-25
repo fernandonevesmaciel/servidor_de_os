@@ -11,7 +11,7 @@
             --primary: #2563eb; --bg: #0f172a; 
             --text-main: #f8fafc; --text-secondary: #94a3b8; 
             --card-bg: #1e293b; --border: #334155;
-            --warning: #f59e0b;
+            --warning: #f59e0b; --danger: #dc2626;
         }
         
         body { 
@@ -96,6 +96,12 @@
             overflow: hidden; 
         }
 
+        /* Classe para OS vencida */
+        .os-card.vencida {
+            background: #450a0a;
+            border: 2px solid var(--danger);
+        }
+
         .os-header {
             display: flex;
             justify-content: space-between;
@@ -170,7 +176,7 @@
             margin: 0;
             color: var(--text-main);
             display: -webkit-box;
-            -webkit-line-clamp: 3; /* Limitado a 3 linhas para garantir que caiba */
+            -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -202,7 +208,6 @@
             color: var(--text-secondary);
             gap: 20px;
         }
-        .vazio i { font-size: 5rem; color: var(--success); }
     </style>
 </head>
 <body>
@@ -265,14 +270,13 @@
                 ordensPendentes.push({ id: doc.id, ...doc.data() });
             });
 
+            // ORDENAÇÃO: Data mais próxima primeiro
             ordensPendentes.sort((a, b) => {
-                let timeA = a.dataCriacao ? a.dataCriacao.toMillis() : 0;
-                let timeB = b.dataCriacao ? b.dataCriacao.toMillis() : 0;
-                return timeA - timeB; 
+                const dataA = a.dataEstipulada ? new Date(a.dataEstipulada).getTime() : Infinity;
+                const dataB = b.dataEstipulada ? new Date(b.dataEstipulada).getTime() : Infinity;
+                return dataA - dataB;
             });
 
-            console.log(`[Painel] Atualizado: ${ordensPendentes.length} O.S. pendentes.`);
-            
             iniciarApresentacao();
         });
 
@@ -280,9 +284,7 @@
             clearInterval(intervaloTroca);
             clearInterval(intervaloProgresso);
             paginaAtual = 0;
-            
             exibirPaginaAtual();
-            
             const totalPaginas = Math.ceil(ordensPendentes.length / ITENS_POR_PAGINA);
             if (totalPaginas > 1) {
                 intervaloTroca = setInterval(exibirPaginaAtual, TEMPO_EXIBICAO_MS);
@@ -292,16 +294,11 @@
         function exibirPaginaAtual() {
             const main = document.getElementById('main-content');
             const indPaginacao = document.getElementById('paginacao');
+            const hoje = new Date();
+            hoje.setHours(0,0,0,0);
             
             if (ordensPendentes.length === 0) {
-                main.innerHTML = `
-                    <div class="vazio">
-                        <i class="fa-solid fa-check-circle" style="color: #10b981;"></i>
-                        <p>Nenhuma O.S. pendente no momento!</p>
-                    </div>
-                `;
-                indPaginacao.innerText = "";
-                animarBarraProgresso(false);
+                main.innerHTML = `<div class="vazio"><i class="fa-solid fa-check-circle" style="color: #10b981;"></i><p>Nenhuma O.S. pendente!</p></div>`;
                 return;
             }
 
@@ -312,40 +309,35 @@
             let htmlGrid = '<div class="grid-container">';
             
             osDaPagina.forEach((os) => {
-                let dataFormatada = os.dataEstipulada || "S/ Data";
-                if (os.dataEstipulada) {
-                    const partes = os.dataEstipulada.split('-');
-                    if (partes.length === 3) dataFormatada = `${partes[2]}/${partes[1]}/${partes[0].substring(2)}`; 
-                }
+                // Lógica de Vencimento
+                let dataObj = os.dataEstipulada ? new Date(os.dataEstipulada + 'T00:00:00') : null;
+                let classeVencida = (dataObj && dataObj < hoje) ? 'vencida' : '';
+                
+                let dataFormatada = os.dataEstipulada ? os.dataEstipulada.split('-').reverse().join('/') : "S/ Data";
 
                 htmlGrid += `
-                    <div class="os-card">
+                    <div class="os-card ${classeVencida}">
                         <div class="os-header">
                             <h2 class="os-codigo">${os.codigoOS}</h2>
-                            <span class="os-tipo"><i class="fa-solid fa-wrench"></i> ${os.tipoServico || 'Não Info'}</span>
+                            <span class="os-tipo"><i class="fa-solid fa-wrench"></i> ${os.tipoServico || 'N/A'}</span>
                         </div>
-                        
                         <div class="os-grid">
-                            <div class="info-box" style="grid-column: span 2; border-color: var(--primary); background: rgba(37, 99, 235, 0.1);">
-                                <span class="info-label">Setor / Local</span>
-                                <p class="info-value" style="color: #fff;" title="${os.setor}">
-                                    <i class="fa-solid fa-map-pin" style="color: var(--primary); margin-right: 5px;"></i> ${os.setor || 'Não informado'}
-                                </p>
+                            <div class="info-box" style="grid-column: span 2;">
+                                <span class="info-label">Setor</span>
+                                <p class="info-value" style="color: #fff;">${os.setor || 'N/A'}</p>
                             </div>
-
                             <div class="info-box">
                                 <span class="info-label">Solicitante</span>
-                                <p class="info-value" title="${os.solicitante}">${os.solicitante || 'N/A'}</p>
+                                <p class="info-value">${os.solicitante || 'N/A'}</p>
                             </div>
                             <div class="info-box">
                                 <span class="info-label">Data Limite</span>
-                                <p class="info-value"><i class="fa-regular fa-calendar"></i> ${dataFormatada}</p>
+                                <p class="info-value">${dataFormatada}</p>
                             </div>
                         </div>
-
                         <div class="os-descricao-container">
-                            <span class="info-label">Descrição da Tarefa</span>
-                            <p class="os-descricao" title="${os.descricao}">${os.descricao || 'Sem descrição.'}</p>
+                            <span class="info-label">Descrição</span>
+                            <p class="os-descricao">${os.descricao || 'Sem descrição.'}</p>
                         </div>
                     </div>
                 `;
@@ -353,38 +345,9 @@
 
             htmlGrid += '</div>';
             main.innerHTML = htmlGrid;
-
-            if (totalPaginas > 1) {
-                indPaginacao.innerText = `Página ${paginaAtual + 1} de ${totalPaginas}`;
-            } else {
-                indPaginacao.innerText = "";
-            }
-
+            indPaginacao.innerText = totalPaginas > 1 ? `Página ${paginaAtual + 1} de ${totalPaginas}` : "";
             paginaAtual = (paginaAtual + 1) % totalPaginas;
-
-            animarBarraProgresso(totalPaginas > 1);
         }
-
-        function animarBarraProgresso(ativar) {
-            const barra = document.getElementById('progressBar');
-            clearInterval(intervaloProgresso);
-            
-            if (!ativar) {
-                barra.style.width = '0%';
-                return;
-            }
-
-            let inicio = Date.now();
-            intervaloProgresso = setInterval(() => {
-                let tempoPassado = Date.now() - inicio;
-                let porcentagem = (tempoPassado / TEMPO_EXIBICAO_MS) * 100;
-                
-                if (porcentagem > 100) porcentagem = 100;
-                barra.style.width = `${porcentagem}%`;
-
-            }, 50);
-        }
-
     </script>
 </body>
 </html>

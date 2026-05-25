@@ -3,129 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abertura de O.S - Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <title>Painel de O.S. em Aberto - Manutenção Pioneiro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         :root { 
-            --primary: #2563eb; --primary-hover: #1d4ed8; --bg: #f8fafc; 
-            --text-main: #1e293b; --text-secondary: #64748b; --border: #e2e8f0;
-            --danger: #ef4444; --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --primary: #2563eb; --bg: #0f172a; 
+            --text-main: #f8fafc; --text-secondary: #94a3b8; 
+            --card-bg: #1e293b; --border: #334155;
+            --warning: #f59e0b; --danger: #dc2626;
         }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; padding-top: 80px; padding-bottom: 40px; }
-        .navbar { position: fixed; top: 0; left: 0; width: 100%; height: 64px; background: white; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; z-index: 1000; box-sizing: border-box; }
-        .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--primary); font-size: 1.25rem; }
-        .back-link { text-decoration: none; color: var(--text-secondary); font-size: 0.875rem; font-weight: 600; }
-        .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
-        .card-style { background: white; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid var(--border); padding: 24px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; }
-        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
-        label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
-        .custom-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; background: #fff; box-sizing: border-box; font-family: 'Inter', sans-serif;}
-        .custom-input:focus { border-color: var(--primary); outline: none; }
-        textarea.custom-input { resize: vertical; min-height: 80px; margin-bottom: 20px; }
-        .btn-primary { background-color: var(--primary); color: white; padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; font-size: 1rem; }
-        .btn-cancel { background-color: #94a3b8; margin-top: 10px; }
-        .btn-secondary { background-color: white; color: var(--primary); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; margin: 0 auto; display: block; }
         
-        .filter-bar { display: flex; gap: 10px; margin-top: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; background: white; padding: 15px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--card-shadow); }
-        .filter-bar .custom-input { flex: 1; min-width: 200px; margin-bottom: 0; }
-        .filter-bar .btn-filter { width: auto; padding: 10px 20px; margin: 0; }
-        @media (max-width: 600px) { .filter-bar { flex-direction: column; } .filter-bar .btn-filter, .filter-bar .custom-input { width: 100%; } }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main); 
+            margin: 0; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; 
+        }
+
+        header {
+            background: var(--card-bg);
+            padding: 15px 40px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
         
-        .grid-os { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; margin-top: 10px;}
-        .item-card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 15px; display: flex; flex-direction: column; }
-        .item-card h4 { margin: 0 0 5px 0; font-size: 1.1rem; font-weight: 700; color: var(--primary); }
-        .item-card p { margin: 0 0 10px 0; font-size: 0.9rem; color: var(--text-secondary); }
-        .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 10px; border-top: 1px solid #f1f5f9; }
-        .action-btn { flex: 1; padding: 6px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
-        .btn-edit { background: #eff6ff; color: var(--primary); }
-        .btn-delete { background: #fef2f2; color: var(--danger); }
-        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; margin-bottom: 10px; }
-        .badge-pendente { background: #fef3c7; color: #b45309; }
-        .badge-concluida { background: #dcfce7; color: #166534; }
-        #status { font-weight: 600; margin-top: 15px; font-size: 0.9rem; text-align: center; min-height: 20px;}
-        .secao-titulo { margin-top: 40px; border-bottom: 2px solid var(--border); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .header-infos {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .paginacao {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .relogio {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--warning);
+        }
+
+        main {
+            flex: 1;
+            padding: 15px 20px;
+            position: relative;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            height: 100%; 
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Animação para o efeito de piscar */
+        @keyframes piscar {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .os-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: hidden; 
+        }
+
+        /* Estilo para O.S. vencida (Fundo vermelho e animação) */
+        .os-card.vencida {
+            background: #7f1d1d !important;
+            border: 2px solid var(--danger) !important;
+            animation: piscar 1.2s infinite;
+        }
+
+        .os-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .os-codigo {
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .os-tipo {
+            background: var(--primary);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .os-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .info-box {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .info-label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .info-value {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--warning);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .os-descricao-container {
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .os-descricao {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            margin: 0;
+            color: var(--text-main);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .progress-bar-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: var(--card-bg);
+            z-index: 20;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+        }
+
+        .vazio {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 2.5rem;
+            color: var(--text-secondary);
+            gap: 20px;
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="brand"><span>📝</span> ADMIN - ABRIR O.S.</div>
-        <a href="index.html" class="back-link">Sair &rarr;</a>
-    </nav>
 
-    <div class="container">
-        <div class="card-style">
-            <h3 id="formTitulo" style="margin-top: 0; margin-bottom: 24px; font-size: 1.1rem;">Criar Nova Ordem de Serviço</h3>
-            
-            <div class="form-grid">
-                <div>
-                    <label>Código da O.S.</label>
-                    <input type="text" id="codigoOS" class="custom-input" placeholder="Ex: 001" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                </div>
-                <div>
-                    <label>Solicitante</label>
-                    <input type="text" id="solicitante" class="custom-input" placeholder="Nome do solicitante">
-                </div>
-                <div>
-                    <label>Setor <span style="color: var(--danger);">*</span></label>
-                    <input type="text" id="setor" class="custom-input" placeholder="Ex: Sala de Cortes, Expedição...">
-                </div>
-                <div>
-                    <label>Data Estipulada</label>
-                    <input type="date" id="dataEstipulada" class="custom-input">
-                </div>
-                <div>
-                    <label>Tipo de Serviço</label>
-                    <select id="tipoServico" class="custom-input">
-                        <option value="Elétrica">Elétrica</option>
-                        <option value="Automação">Automação</option>
-                        <option value="Montagem">Montagem</option>
-                        <option value="Civil">Civil</option>
-                        <option value="Manutenção">Manutenção</option>
-                    </select>
-                </div>
-            </div>
-
-            <label>Foto do Local <span id="fotoLabel" style="font-weight: normal; font-size: 0.8em;">(Opcional na edição)</span></label>
-            <input type="file" id="fotoInput" class="custom-input" accept="image/*" style="margin-bottom: 20px; padding: 7px;">
-
-            <label>Descrição do Serviço</label>
-            <textarea id="descricao" class="custom-input" placeholder="Detalhes do que precisa ser feito..."></textarea>
-            
-            <button onclick="salvarOS()" id="btnSalvar" class="btn-primary">Criar Ordem de Serviço</button>
-            <button onclick="cancelarEdicao()" id="btnCancelar" class="btn-primary btn-cancel" style="display: none;">Cancelar Edição</button>
-            <p id="status"></p>
+    <header>
+        <h1><i class="fa-solid fa-tv"></i> Painel de O.S. Pendentes</h1>
+        <div class="header-infos">
+            <div class="paginacao" id="paginacao"></div>
+            <div class="relogio" id="relogio">00:00:00</div>
         </div>
+    </header>
 
-        <div class="secao-titulo">
-            <h3 style="margin: 0;">Gerenciar O.S. Abertas</h3>
-            <span style="font-size: 0.8rem; color: var(--text-secondary);">Sincronizadas em ambos os bancos.</span>
+    <main id="main-content">
+        <div class="vazio">
+            <i class="fa-solid fa-spinner fa-spin" style="color: var(--primary);"></i>
+            <p>Carregando Ordens de Serviço...</p>
         </div>
+    </main>
 
-        <div class="filter-bar">
-            <input type="text" id="buscaCodigo" class="custom-input" placeholder="Pesquisar por Código..." inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-            <select id="buscaTipo" class="custom-input">
-                <option value="">Todos os Tipos</option>
-                <option value="Elétrica">Elétrica</option>
-                <option value="Automação">Automação</option>
-                <option value="Montagem">Montagem</option>
-                <option value="Civil">Civil</option>
-                <option value="Manutenção">Manutenção</option>
-            </select>
-            <button onclick="aplicarFiltros()" class="btn-primary btn-filter">🔍 Buscar</button>
-            <button onclick="limparFiltros()" class="btn-secondary btn-filter">Limpar</button>
-        </div>
-
-        <div id="lista" class="grid-os"></div>
-        <button id="btnCarregarMais" onclick="carregarProximos()" class="btn-secondary" style="display: none;">Carregar Mais</button>
-        <p id="msgFim" style="text-align:center; color: #64748b; display: none; font-size: 0.9rem; margin-top: 20px;">Todas carregadas.</p>
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, orderBy, limit, startAfter, doc, deleteDoc, updateDoc, setDoc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const configMecanica = {
+        const firebaseConfig = {
             apiKey: "AIzaSyAwBdNKVmujXM-icPXZllCYw4ED6ugSEK0",
             authDomain: "mecanica-699bb.firebaseapp.com",
             projectId: "mecanica-699bb",
@@ -134,308 +252,122 @@
             measurementId: "G-G78PR55F9F"
         };
 
-        const configEletrica = {
-            apiKey: "AIzaSyB_w4-z_onAEUf10ROfYCmvnm6Fkkp2sYo",
-            authDomain: "eletrica-8c96e.firebaseapp.com",
-            projectId: "eletrica-8c96e",
-            storageBucket: "eletrica-8c96e.firebasestorage.app",
-            messagingSenderId: "456815528430",
-            appId: "1:456815528430:web:4cf873dc8071c9a2bbe6ff"
-        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-        const appMecanica = initializeApp(configMecanica, "AppMecanica");
-        const appEletrica = initializeApp(configEletrica, "AppEletrica");
+        const ITENS_POR_PAGINA = 8; 
+        const TEMPO_EXIBICAO_MS = 15000; 
+        
+        let ordensPendentes = [];
+        let paginaAtual = 0;
+        let intervaloTroca;
+        let intervaloProgresso;
 
-        const dbMecanica = getFirestore(appMecanica);
-        const dbEletrica = getFirestore(appEletrica);
+        function atualizarRelogio() {
+            const agora = new Date();
+            document.getElementById('relogio').innerText = agora.toLocaleTimeString('pt-BR');
+        }
+        setInterval(atualizarRelogio, 1000);
+        atualizarRelogio();
 
-        let ultimoDocCarregado = null;
-        const ITENS_POR_PAGINA = 6;
-        let carregando = false;
-        let idEdicao = null; 
-        let fotoUrlAtual = ""; 
-
-        // Cache para armazenar os dados e evitar quebra no HTML
-        window.osDataCache = {};
-
-        const converterParaBase64 = (file) => {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
+        const q = query(collection(db, "ordens_servico"), where("status", "==", "Pendente"));
+        
+        onSnapshot(q, (snapshot) => {
+            ordensPendentes = [];
+            snapshot.forEach((doc) => {
+                ordensPendentes.push({ id: doc.id, ...doc.data() });
             });
-        };
 
-        window.aplicarFiltros = function() {
-            document.getElementById('lista').innerHTML = '';
-            document.getElementById('msgFim').style.display = 'none';
-            document.getElementById('btnCarregarMais').style.display = 'none';
-            ultimoDocCarregado = null;
-            carregarProximos();
-        }
+            // Ordena por data (mais antigas primeiro)
+            ordensPendentes.sort((a, b) => {
+                const dateA = a.dataEstipulada ? new Date(a.dataEstipulada).getTime() : Infinity;
+                const dateB = b.dataEstipulada ? new Date(b.dataEstipulada).getTime() : Infinity;
+                return dateA - dateB;
+            });
 
-        window.limparFiltros = function() {
-            document.getElementById('buscaCodigo').value = '';
-            document.getElementById('buscaTipo').value = '';
-            resetarLista();
-        }
+            iniciarApresentacao();
+        });
 
-        window.salvarOS = async function() {
-            const codigoOS = document.getElementById('codigoOS').value;
-            const solicitante = document.getElementById('solicitante').value;
-            const setor = document.getElementById('setor').value;
-            const dataEstipulada = document.getElementById('dataEstipulada').value;
-            const tipoServico = document.getElementById('tipoServico').value;
-            const descricao = document.getElementById('descricao').value;
-            const fileInput = document.getElementById('fotoInput');
-            const file = fileInput.files[0];
-            
-            const btn = document.getElementById('btnSalvar');
-            const status = document.getElementById('status');
-
-            if (!codigoOS || !solicitante || !setor || !descricao) { 
-                alert("Preencha Código, Solicitante, Setor e Descrição!"); 
-                return; 
-            }
-            if (!idEdicao && !file) { alert("Anexe uma foto do local!"); return; }
-            if (file && file.size > 700 * 1024) { alert("Foto muito grande! Use < 700KB."); return; }
-
-            try {
-                btn.disabled = true;
-                btn.innerText = idEdicao ? "Atualizando em ambos..." : "Salvando em ambos...";
-                status.innerText = "";
-                
-                let fotoFinal = fotoUrlAtual; 
-                if (file) fotoFinal = await converterParaBase64(file);
-
-                const dados = {
-                    codigoOS: codigoOS,
-                    codigoBusca: codigoOS.toLowerCase(),
-                    solicitante: solicitante,
-                    setor: setor,
-                    dataEstipulada: dataEstipulada,
-                    tipoServico: tipoServico,
-                    descricao: descricao,
-                    fotoUrl: fotoFinal,
-                    dataAtualizacao: new Date()
-                };
-
-                if (!idEdicao) {
-                    dados.status = "Pendente"; 
-                    dados.dataCriacao = new Date();
-                    
-                    const novoDocRef = doc(collection(dbMecanica, "ordens_servico"));
-                    const novoId = novoDocRef.id;
-
-                    await setDoc(doc(dbMecanica, "ordens_servico", novoId), dados);
-                    await setDoc(doc(dbEletrica, "ordens_servico", novoId), dados);
-                    
-                    status.style.color = "green"; status.innerText = "O.S. Sincronizada com sucesso!";
-                    limparFormulario();
-                } else {
-                    await updateDoc(doc(dbMecanica, "ordens_servico", idEdicao), dados);
-                    await updateDoc(doc(dbEletrica, "ordens_servico", idEdicao), dados);
-                    
-                    status.style.color = "blue"; status.innerText = "Atualizado em ambos os bancos!";
-                    cancelarEdicao(); 
-                }
-                
-                limparFiltros();
-            } catch (error) {
-                console.error("Erro:", error); status.innerText = "Erro ao salvar.";
-            } finally {
-                btn.disabled = false;
-                if (!idEdicao) btn.innerText = "Criar Ordem de Serviço";
-                setTimeout(() => status.innerText = "", 3000);
+        function iniciarApresentacao() {
+            clearInterval(intervaloTroca);
+            clearInterval(intervaloProgresso);
+            paginaAtual = 0;
+            exibirPaginaAtual();
+            const totalPaginas = Math.ceil(ordensPendentes.length / ITENS_POR_PAGINA);
+            if (totalPaginas > 1) {
+                intervaloTroca = setInterval(exibirPaginaAtual, TEMPO_EXIBICAO_MS);
             }
         }
 
-        window.editarItem = function(id) {
-            // Busca os dados diretamente da memória usando o ID
-            const data = window.osDataCache[id];
+        function exibirPaginaAtual() {
+            const main = document.getElementById('main-content');
+            const indPaginacao = document.getElementById('paginacao');
+            const hoje = new Date();
+            hoje.setHours(0,0,0,0);
             
-            if (!data) {
-                alert("Erro ao carregar dados para edição.");
+            if (ordensPendentes.length === 0) {
+                main.innerHTML = `<div class="vazio"><i class="fa-solid fa-check-circle" style="color: #10b981;"></i><p>Nenhuma O.S. pendente!</p></div>`;
                 return;
             }
 
-            // TRAVA DE SEGURANÇA: Bloqueia a edição se a O.S já estiver concluída
-            if (data.status === 'Concluída') {
-                alert("Não é possível editar uma Ordem de Serviço que já foi concluída.");
-                return;
-            }
+            const totalPaginas = Math.ceil(ordensPendentes.length / ITENS_POR_PAGINA);
+            const startIndex = paginaAtual * ITENS_POR_PAGINA;
+            const osDaPagina = ordensPendentes.slice(startIndex, startIndex + ITENS_POR_PAGINA);
 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            let htmlGrid = '<div class="grid-container">';
             
-            document.getElementById('codigoOS').value = data.codigoOS || '';
-            document.getElementById('solicitante').value = data.solicitante || '';
-            document.getElementById('setor').value = data.setor || '';
-            document.getElementById('dataEstipulada').value = data.dataEstipulada || '';
-            document.getElementById('tipoServico').value = data.tipoServico || 'Elétrica';
-            document.getElementById('descricao').value = data.descricao || '';
-            
-            idEdicao = id; 
-            fotoUrlAtual = data.fotoUrl;
-
-            document.getElementById('formTitulo').innerText = "Editando O.S: " + data.codigoOS;
-            document.getElementById('btnSalvar').innerText = "Salvar Alterações";
-            document.getElementById('btnSalvar').style.backgroundColor = "#f59e0b";
-            document.getElementById('btnCancelar').style.display = "block";
-            document.getElementById('fotoLabel').innerText = "(Deixe vazio para manter a foto atual)";
-        }
-
-        window.cancelarEdicao = function() {
-            idEdicao = null; fotoUrlAtual = "";
-            limparFormulario();
-            document.getElementById('formTitulo').innerText = "Criar Nova Ordem de Serviço";
-            document.getElementById('btnSalvar').innerText = "Criar Ordem de Serviço";
-            document.getElementById('btnSalvar').style.backgroundColor = ""; 
-            document.getElementById('btnCancelar').style.display = "none";
-            document.getElementById('fotoLabel').innerText = "(Opcional na edição)";
-        }
-
-        window.excluirItem = async function(id, codigoOS) {
-            if (confirm(`Tem certeza que deseja excluir a O.S. ${codigoOS} de AMBOS os bancos?`)) {
-                try {
-                    await deleteDoc(doc(dbMecanica, "ordens_servico", id));
-                    await deleteDoc(doc(dbEletrica, "ordens_servico", id));
-                    
-                    alert("O.S. excluída dos dois sistemas!"); 
-                    aplicarFiltros(); 
-                } catch (error) { 
-                    console.error(error); 
-                    alert("Erro ao excluir."); 
-                }
-            }
-        }
-
-        window.carregarProximos = async function() {
-            if (carregando) return;
-            carregando = true;
-            
-            const btnMais = document.getElementById('btnCarregarMais');
-            const msgFim = document.getElementById('msgFim');
-            
-            const codigoFiltro = document.getElementById('buscaCodigo').value.trim().toLowerCase();
-            const tipoFiltro = document.getElementById('buscaTipo').value;
-            let temFiltroAtivo = codigoFiltro !== '' || tipoFiltro !== '';
-
-            if(btnMais && !temFiltroAtivo) btnMais.innerText = "Carregando...";
-
-            try {
-                let q;
-                const colRef = collection(dbMecanica, "ordens_servico");
-                let restricoes = [];
-
-                if (codigoFiltro) {
-                    restricoes.push(where("codigoBusca", ">=", codigoFiltro));
-                    restricoes.push(where("codigoBusca", "<=", codigoFiltro + '\uf8ff'));
-                } 
-                else if (tipoFiltro) {
-                    restricoes.push(where("tipoServico", "==", tipoFiltro));
-                }
-
-                if (!temFiltroAtivo) {
-                    if (!ultimoDocCarregado) {
-                        q = query(colRef, orderBy("dataCriacao", "desc"), limit(ITENS_POR_PAGINA));
-                    } else {
-                        q = query(colRef, orderBy("dataCriacao", "desc"), startAfter(ultimoDocCarregado), limit(ITENS_POR_PAGINA));
-                    }
-                } else {
-                    q = query(colRef, ...restricoes, limit(50));
-                }
-
-                const snapshot = await getDocs(q);
+            osDaPagina.forEach((os) => {
+                let dataObj = os.dataEstipulada ? new Date(os.dataEstipulada + 'T00:00:00') : null;
+                let isVencida = dataObj && dataObj < hoje;
+                let classeVencida = isVencida ? 'vencida' : '';
                 
-                let docsArray = [];
-                snapshot.forEach((docSnap) => {
-                    docsArray.push({ id: docSnap.id, data: docSnap.data() });
-                });
+                let dataFormatada = os.dataEstipulada ? os.dataEstipulada.split('-').reverse().join('/') : "S/ Data";
 
-                if (temFiltroAtivo) {
-                    docsArray.sort((a, b) => {
-                        let timeA = a.data.dataCriacao ? a.data.dataCriacao.toMillis() : 0;
-                        let timeB = b.data.dataCriacao ? b.data.dataCriacao.toMillis() : 0;
-                        return timeB - timeA;
-                    });
-                }
+                htmlGrid += `
+                    <div class="os-card ${classeVencida}">
+                        <div class="os-header">
+                            <h2 class="os-codigo">${os.codigoOS}</h2>
+                            <span class="os-tipo"><i class="fa-solid fa-wrench"></i> ${os.tipoServico || 'N/A'}</span>
+                        </div>
+                        <div class="os-grid">
+                            <div class="info-box" style="grid-column: span 2;">
+                                <span class="info-label">Setor</span>
+                                <p class="info-value" style="color: #fff;">${os.setor || 'N/A'}</p>
+                            </div>
+                            <div class="info-box">
+                                <span class="info-label">Solicitante</span>
+                                <p class="info-value">${os.solicitante || 'N/A'}</p>
+                            </div>
+                            <div class="info-box">
+                                <span class="info-label">Data Limite</span>
+                                <p class="info-value">${dataFormatada}</p>
+                            </div>
+                        </div>
+                        <div class="os-descricao-container">
+                            <span class="info-label">Descrição</span>
+                            <p class="os-descricao">${os.descricao || 'Sem descrição.'}</p>
+                        </div>
+                    </div>
+                `;
+            });
 
-                if (docsArray.length === 0) {
-                    if(btnMais) btnMais.style.display = "none";
-                    if(msgFim) {
-                        msgFim.innerText = temFiltroAtivo ? "Nenhuma O.S. encontrada para este filtro." : "Todas carregadas.";
-                        msgFim.style.display = "block";
-                    }
-                    carregando = false; return;
-                } else {
-                    if(msgFim) msgFim.style.display = "none";
-                }
-
-                docsArray.forEach(item => criarCard(item.id, item.data));
-
-                if (temFiltroAtivo) {
-                    if(btnMais) btnMais.style.display = "none";
-                } else {
-                    ultimoDocCarregado = snapshot.docs[snapshot.docs.length - 1];
-                    if (snapshot.docs.length < ITENS_POR_PAGINA) {
-                        if(btnMais) btnMais.style.display = "none";
-                        if(msgFim) {
-                            msgFim.innerText = "Todas carregadas.";
-                            msgFim.style.display = "block";
-                        }
-                    } else {
-                        if(btnMais) { btnMais.style.display = "block"; btnMais.innerText = "Carregar Mais"; }
-                    }
-                }
-            } catch (error) { console.error("Erro:", error); } 
-            finally { carregando = false; }
+            htmlGrid += '</div>';
+            main.innerHTML = htmlGrid;
+            indPaginacao.innerText = totalPaginas > 1 ? `Página ${paginaAtual + 1} de ${totalPaginas}` : "";
+            paginaAtual = (paginaAtual + 1) % totalPaginas;
+            animarBarraProgresso(totalPaginas > 1);
         }
 
-        function resetarLista() {
-            document.getElementById('lista').innerHTML = '';
-            document.getElementById('msgFim').style.display = 'none';
-            document.getElementById('btnCarregarMais').style.display = 'none';
-            ultimoDocCarregado = null; 
-            window.osDataCache = {}; // Limpa o cache ao resetar
-            carregarProximos();
+        function animarBarraProgresso(ativar) {
+            const barra = document.getElementById('progressBar');
+            clearInterval(intervaloProgresso);
+            if (!ativar) { barra.style.width = '0%'; return; }
+            let inicio = Date.now();
+            intervaloProgresso = setInterval(() => {
+                let progresso = ((Date.now() - inicio) / TEMPO_EXIBICAO_MS) * 100;
+                barra.style.width = Math.min(progresso, 100) + '%';
+            }, 50);
         }
-
-        function criarCard(id, data) {
-            // Salva os dados na memória para não quebrar o HTML com a descrição
-            window.osDataCache[id] = data;
-
-            const div = document.createElement('div');
-            div.className = 'item-card';
-            
-            const badgeClass = data.status === 'Concluída' ? 'badge-concluida' : 'badge-pendente';
-            
-            // Note que agora o onclick passa apenas o ID, e não mais o dataString
-            div.innerHTML = `
-                <h4>${data.codigoOS}</h4>
-                <p style="font-size: 0.8rem; margin: -5px 0 10px 0; color: var(--primary);"><strong>${data.tipoServico}</strong></p>
-                <div><span class="badge ${badgeClass}">${data.status}</span></div>
-                <p style="margin-bottom: 5px;"><strong>Setor:</strong> ${data.setor || 'Não informado'}</p>
-                <p><strong>Solicitante:</strong> ${data.solicitante}</p>
-                <div class="card-actions">
-                    <button class="action-btn btn-edit" onclick='editarItem("${id}")'>Editar</button>
-                    <button class="action-btn btn-delete" onclick='excluirItem("${id}", "${data.codigoOS}")'>Excluir</button>
-                </div>
-            `;
-            document.getElementById('lista').appendChild(div);
-        }
-
-        function limparFormulario() {
-            document.getElementById('codigoOS').value = '';
-            document.getElementById('solicitante').value = '';
-            document.getElementById('setor').value = '';
-            document.getElementById('dataEstipulada').value = '';
-            document.getElementById('tipoServico').value = 'Elétrica';
-            document.getElementById('descricao').value = '';
-            document.getElementById('fotoInput').value = '';
-        }
-
-        resetarLista();
     </script>
 </body>
 </html>
